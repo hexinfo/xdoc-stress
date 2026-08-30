@@ -1,0 +1,102 @@
+# Release:打 v* 标签 → 三平台打包 → 发布到 GitHub Releases
+#
+# 产物:macOS .dmg + Linux tar.xz(x86_64/aarch64, Debian 10 glibc 2.28 地板)
+# 说明:Linux 在 Debian 10(glibc 2.28)容器内编译,兼容 UOS 20/麒麟 V10 等信创系统;
+#       macOS 用 tauri-cli 原生打包(.app + .dmg)
+
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ── macOS (arm64 + x64 通用二进制) ──
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          shared-key: release-macos
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g pnpm@10
+      - run: pnpm --dir frontend install --silent
+      - run: pnpm --dir frontend exec vite build
+      - run: cargo install tauri-cli --version ^2
+      - run: cd src-tauri && cargo tauri build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: src-tauri/target/release/bundle/dmg/*.dmg
+
+  # ── Linux x86_64 (Debian 10 容器, glibc 2.28) ──
+  linux-x86_64:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .ci-cache
+            target
+          key: linux-x86_64-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: linux-x86_64-cargo-
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g pnpm@10
+      - run: bash scripts/pack-linux.sh x86_64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-x86_64-tarxz
+          path: dist/*.tar.xz
+
+  # ── Linux aarch64 (GitHub 原生 arm64 runner, Debian 10 容器) ──
+  linux-aarch64:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .ci-cache
+            target
+          key: linux-aarch64-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: linux-aarch64-cargo-
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g pnpm@10
+      - run: bash scripts/pack-linux.sh aarch64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-aarch64-tarxz
+          path: dist/*.tar.xz
+
+  publish:
+    needs: [macos, linux-x86_64, linux-aarch64]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: dist
+      - run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          gh release create "$TAG" dist/* --title "xdoc-stress $TAG" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
