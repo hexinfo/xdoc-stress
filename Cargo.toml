@@ -1,5 +1,5 @@
 [workspace]
-members = ["stress-core", "src-cli", "src-slint", "src-tauri"]
+members = ["stress-core", "src-cli", "src-slint"]
 resolver = "2"
 
 # ── 优化体积 ──
