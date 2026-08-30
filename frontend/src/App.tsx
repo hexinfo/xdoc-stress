@@ -59,7 +59,7 @@ export default function App() {
   const logSeen = useRef(0)
   const [baseUrl, setBaseUrl] = useState('')
   const [authToken, setAuthToken] = useState('')
-  const [steps, setSteps] = useState<string[]>(STEPS)
+  const [steps] = useState<string[]>(STEPS)
   const [concurrency, setConcurrency] = useState(1)
   const [repeats, setRepeats] = useState(1)
   const [rangeChunk, setRangeChunk] = useState(1048576)
@@ -74,8 +74,7 @@ export default function App() {
     if (!saved) return
     if (typeof saved.baseUrl === 'string') setBaseUrl(saved.baseUrl)
     if (typeof saved.authToken === 'string') setAuthToken(saved.authToken)
-    if (Array.isArray(saved.steps) && saved.steps.length > 0) setSteps(saved.steps)
-    if (typeof saved.concurrency === 'number') setConcurrency(saved.concurrency)
+        if (typeof saved.concurrency === 'number') setConcurrency(saved.concurrency)
     if (typeof saved.repeats === 'number') setRepeats(saved.repeats)
     if (typeof saved.rangeChunk === 'number') setRangeChunk(saved.rangeChunk)
     if (typeof saved.tileBatch === 'number') setTileBatch(saved.tileBatch)
@@ -249,15 +248,6 @@ export default function App() {
             <input className="in" value={baseUrl} onChange={e => setBaseUrl(e.target.value)} placeholder="http://host:8080/dvs" />
             <label className="lbl">AUTH_TOKEN</label>
             <input className="in" value={authToken} onChange={e => setAuthToken(e.target.value)} placeholder="留空则不带" />
-            <div className="sec">步骤</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              {STEPS.map(s => (
-                <label key={s} className="ck">
-                  <input type="checkbox" checked={steps.includes(s)} onChange={() => setSteps(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s])} />
-                  {s}
-                </label>
-              ))}
-            </div>
             <div className="sec">并发</div>
             <div className="g2">
               <div><label className="lbl">线程</label><input className="in" type="number" value={concurrency} onChange={e => setConcurrency(+e.target.value)} min={1} /></div>
