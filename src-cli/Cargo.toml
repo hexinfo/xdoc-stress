@@ -1,0 +1,13 @@
+[package]
+name = "xdoc-stress-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+stress-core = { path = "../stress-core" }
+tokio = { version = "1", features = ["full"] }
+serde_json = "1"
+
+[[bin]]
+name = "xdoc-stress"
+path = "src/main.rs"

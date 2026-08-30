@@ -1,0 +1,209 @@
+// x-doc 核心链路压测 —— Slint UI
+// 纯 Rust GUI，无 webkit/gtk，兼容 glibc 2.28
+
+import { Button, LineEdit, CheckBox, ScrollView, StandardTableView } from "std-widgets.slint";
+
+export component App inherits Window {
+    title: "x-doc 核心链路压测";
+    preferred-width: 1100px;
+    preferred-height: 700px;
+    min-width: 900px;
+    min-height: 550px;
+
+    // ── 状态属性 ──
+    in-out property <string> base-url: "http://127.0.0.1:8080/dvs";
+    in-out property <string> auth-token: "";
+    in-out property <string> concurrency: "1";
+    in-out property <string> repeats: "2";
+    in-out property <bool> running: false;
+    in-out property <string> status-text: "就绪";
+    in-out property <string> log-text: "";
+    in-out property <int> row-count: 0;
+    in-out property <int> success-count: 0;
+    in-out property <string> result-text: "";
+
+    // ── 回调（Rust 侧连接） ──
+    callback start-test();
+    callback stop-test();
+
+    // ── 布局 ──
+    HorizontalLayout {
+        padding: 8px;
+        spacing: 8px;
+
+        // 左栏：配置
+        VerticalLayout {
+            width: 260px;
+            spacing: 8px;
+
+            Rectangle {
+                background: #f8f9fb;
+                border-radius: 8px;
+                border-width: 1px;
+                border-color: #d9dce1;
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 6px;
+
+                    Text {
+                        text: "配置";
+                        font-size: 14px;
+                        font-weight: 700;
+                        color: #1a1d24;
+                    }
+
+                    Text {
+                        text: "BASE_URL";
+                        font-size: 11px;
+                        color: #5f6672;
+                    }
+                    LineEdit {
+                        text <=> root.base-url;
+                        font-size: 12px;
+                        placeholder-text: "http://host:8080/dvs";
+                    }
+
+                    Text {
+                        text: "AUTH_TOKEN";
+                        font-size: 11px;
+                        color: #5f6672;
+                    }
+                    LineEdit {
+                        text <=> root.auth-token;
+                        font-size: 12px;
+                        placeholder-text: "留空则不带";
+                    }
+
+                    Rectangle { height: 8px; }
+
+                    Text {
+                        text: "并发";
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: #2563eb;
+                    }
+                    HorizontalLayout {
+                        spacing: 8px;
+                        Text {
+                            text: "线程";
+                            font-size: 11px;
+                            color: #5f6672;
+                            vertical-alignment: center;
+                        }
+                        LineEdit {
+                            text <=> root.concurrency;
+                            font-size: 12px;
+                            width: 60px;
+                        }
+                        Text {
+                            text: "轮次";
+                            font-size: 11px;
+                            color: #5f6672;
+                            vertical-alignment: center;
+                        }
+                        LineEdit {
+                            text <=> root.repeats;
+                            font-size: 12px;
+                            width: 60px;
+                        }
+                    }
+
+                    Rectangle { height: 16px; }
+
+                    Button {
+                        text: root.running ? "运行中…" : "▶ 开始测试";
+                        primary: true;
+                        enabled: !root.running;
+                        clicked => { root.start-test(); }
+                    }
+                    Button {
+                        text: "■ 停止";
+                        enabled: root.running;
+                        clicked => { root.stop-test(); }
+                    }
+                }
+            }
+        }
+
+        // 右栏：结果 + 日志
+        VerticalLayout {
+            spacing: 8px;
+
+            // 结果面板
+            Rectangle {
+                background: #ffffff;
+                border-radius: 8px;
+                border-width: 1px;
+                border-color: #d9dce1;
+                vertical-stretch: 3;
+
+                VerticalLayout {
+                    padding: 8px;
+
+                    HorizontalLayout {
+                        spacing: 8px;
+                        Text {
+                            text: "结果";
+                            font-size: 14px;
+                            font-weight: 700;
+                            color: #1a1d24;
+                        }
+                        Rectangle { horizontal-stretch: 1; }
+                        Text {
+                            text: root.status-text;
+                            font-size: 12px;
+                            color: #5f6672;
+                        }
+                    }
+
+                    Rectangle {
+                        vertical-stretch: 1;
+                        if root.row-count == 0: Text {
+                            text: "配置参数后点「开始测试」";
+                            color: #9ba1ad;
+                            font-size: 13px;
+                        }
+                        if root.row-count > 0: Text {
+                            text: root.result-text;
+                            color: #1a7f37;
+                            font-size: 13px;
+                        }
+                    }
+                }
+            }
+
+            // 日志面板
+            Rectangle {
+                background: #fafbfc;
+                border-radius: 8px;
+                border-width: 1px;
+                border-color: #d9dce1;
+                vertical-stretch: 1;
+
+                VerticalLayout {
+                    padding: 8px;
+
+                    Text {
+                        text: "运行日志";
+                        font-size: 14px;
+                        font-weight: 700;
+                        color: #1a1d24;
+                    }
+
+                    ScrollView {
+                        vertical-stretch: 1;
+
+                        Text {
+                            text: root.log-text;
+                            font-size: 11px;
+                            font-family: "monospace";
+                            color: #424a53;
+                            wrap: word-wrap;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

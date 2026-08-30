@@ -1,0 +1,3 @@
+[workspace]
+members = ["stress-core", "src-cli", "src-slint", "src-tauri"]
+resolver = "2"
