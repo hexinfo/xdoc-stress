@@ -25,7 +25,7 @@ docker run --rm --platform "linux/$ARCH" \
     done
     # Slint 只需 X11 基础库（软件渲染，无 OpenGL/GTK）
     apt-get -o Acquire::Retries=8 install -y -qq --no-install-recommends \
-        build-essential curl ca-certificates xz-utils pkg-config file \
+        build-essential curl ca-certificates xz-utils pkg-config file lld \
         libx11-dev libxext-dev libxft-dev libxrandr-dev libxcursor-dev libxi-dev \
         libfontconfig1-dev libfreetype6-dev
     export PATH="/cargo/bin:$PATH"
@@ -33,6 +33,7 @@ docker run --rm --platform "linux/$ARCH" \
         curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable --no-modify-path
     fi
     cargo --version
+    export RUSTFLAGS="-C link-arg=-fuse-ld=lld"
     cargo build --release --manifest-path src-slint/Cargo.toml
     strip target/release/xdoc-stress
 '
