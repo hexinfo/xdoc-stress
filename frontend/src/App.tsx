@@ -59,6 +59,7 @@ export default function App() {
   const logSeen = useRef(0)
   const [baseUrl, setBaseUrl] = useState('')
   const [authToken, setAuthToken] = useState('')
+  const [authHeaders, setAuthHeaders] = useState('')
   const [steps] = useState<string[]>(STEPS)
   const [concurrency, setConcurrency] = useState(1)
   const [repeats, setRepeats] = useState(1)
@@ -74,6 +75,7 @@ export default function App() {
     if (!saved) return
     if (typeof saved.baseUrl === 'string') setBaseUrl(saved.baseUrl)
     if (typeof saved.authToken === 'string') setAuthToken(saved.authToken)
+    if (typeof saved.authHeaders === 'string') setAuthHeaders(saved.authHeaders)
         if (typeof saved.concurrency === 'number') setConcurrency(saved.concurrency)
     if (typeof saved.repeats === 'number') setRepeats(saved.repeats)
     if (typeof saved.rangeChunk === 'number') setRangeChunk(saved.rangeChunk)
@@ -136,7 +138,7 @@ export default function App() {
       return
     }
     saveConfig({
-      baseUrl, authToken, steps, concurrency, repeats, rangeChunk, tileBatch,
+      baseUrl, authToken, authHeaders, steps, concurrency, repeats, rangeChunk, tileBatch,
       pollIntervalMs: pollInterval, pollMaxTimes: pollMax,
     })
   }, [baseUrl, authToken, steps, concurrency, repeats, rangeChunk, tileBatch, pollInterval, pollMax, files])
@@ -146,8 +148,13 @@ export default function App() {
     if (!sel.length) return alert('请先添加并勾选文件')
     if (!baseUrl.trim()) return alert('请填 BASE_URL')
     setLogText(''); logSeen.current = 0
+    let parsedHeaders = {}
+    if (authHeaders.trim()) {
+      try { parsedHeaders = JSON.parse(authHeaders.trim()) }
+      catch { return alert('AUTH_HEADERS 不是合法 JSON，示例：{"Cookie":"sid=xxx"}') }
+    }
     try {
-      await invoke('start_run', { config: { baseUrl: baseUrl.trim(), authToken: authToken.trim(), authHeaders: {}, steps, concurrency, repeats, rangeChunk, tileBatch, pollIntervalMs: pollInterval, pollMaxTimes: pollMax, files: sel } })
+      await invoke('start_run', { config: { baseUrl: baseUrl.trim(), authToken: authToken.trim(), authHeaders: parsedHeaders, steps, concurrency, repeats, rangeChunk, tileBatch, pollIntervalMs: pollInterval, pollMaxTimes: pollMax, files: sel } })
     } catch (e) { alert(String(e)) }
   }
 
@@ -246,8 +253,10 @@ export default function App() {
             <div className="sec">目标</div>
             <label className="lbl">BASE_URL</label>
             <input className="in" value={baseUrl} onChange={e => setBaseUrl(e.target.value)} placeholder="http://host:8080/dvs" />
-            <label className="lbl">AUTH_TOKEN</label>
-            <input className="in" value={authToken} onChange={e => setAuthToken(e.target.value)} placeholder="留空则不带" />
+            <label className="lbl">AUTH_TOKEN（Bearer）</label>
+            <input className="in" value={authToken} onChange={e => setAuthToken(e.target.value)} placeholder="eyJhbGciOi…（留空则不带）" />
+            <label className="lbl">AUTH_HEADERS（JSON，Cookie 等）</label>
+            <input className="in" value={authHeaders} onChange={e => setAuthHeaders(e.target.value)} placeholder='{"Cookie":"JSESSIONID=abc123"}' style={{ fontSize: 11 }} />
             <div className="sec">并发</div>
             <div className="g2">
               <div><label className="lbl">线程</label><input className="in" type="number" value={concurrency} onChange={e => setConcurrency(+e.target.value)} min={1} /></div>
