@@ -1,5 +1,8 @@
 //! x-doc 核心链路压测 —— Slint GUI（纯 Rust，无 webkit，兼容 glibc 2.28）
 
+// release 下隐藏 Windows 控制台窗口（GUI 子系统）；debug 保留 stdout/stderr 便于排查
+#![cfg_attr(all(not(debug_assertions), target_os = "windows"), windows_subsystem = "windows")]
+
 slint::include_modules!();
 
 use slint::Model;
