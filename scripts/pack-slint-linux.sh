@@ -42,8 +42,11 @@ BIN="target/release/xdoc-stress"
 [ -f "$BIN" ] || { echo "❌ 产物不存在: $BIN"; exit 1; }
 
 echo "━━━ [slint-linux-$ARCH] glibc 断言 ━━━"
-MAX=$(strings "$BIN" | grep -o "GLIBC_[0-9.]*" | sort -V | tail -1 | cut -d. -f3)
-[ "$MAX" -le 28 ] && echo "✅ GLIBC_2.$MAX ≤ 2.28" || { echo "❌ GLIBC_2.$MAX > 2.28"; exit 1; }
+MAXVER=$(strings "$BIN" | grep -oE "GLIBC_[0-9]+(\\.[0-9]+)*" | sort -uV | tail -1)
+MAX=${MAXVER#GLIBC_}
+[ -n "$MAX" ] || { echo "❌ 未检测到 GLIBC 版本符号"; exit 1; }
+LE=$(printf '%s\n' "2.28" "$MAX" | sort -V | tail -1)
+[ "$LE" = "2.28" ] && echo "✅ GLIBC_$MAX ≤ 2.28" || { echo "❌ GLIBC_$MAX > 2.28"; exit 1; }
 
 VERSION="0.2.0"
 OUT="dist/xdoc-stress_${VERSION}_linux-${ARCH}.tar.xz"
