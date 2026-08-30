@@ -67,7 +67,7 @@ jobs:
       - run: cargo build --release --manifest-path src-slint/Cargo.toml
         shell: bash
       - run: |
-          VERSION=$(grep -m1 '^version' src-slint/Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          VERSION="${GITHUB_REF_NAME#v}"; [ -n "$VERSION" ] || VERSION=$(grep -m1 '^version' src-slint/Cargo.toml | sed 's/version = "\(.*\)"/\1/')
           mkdir -p dist
           cp src-slint/../target/release/xdoc-stress.exe "dist/xdoc-stress_${VERSION}_windows-x64.exe"
         shell: bash

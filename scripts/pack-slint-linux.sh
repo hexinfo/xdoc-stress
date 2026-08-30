@@ -52,7 +52,9 @@ MAX=${MAXVER#GLIBC_}
 LE=$(printf '%s\n' "2.28" "$MAX" | sort -V | tail -1)
 [ "$LE" = "2.28" ] && echo "✅ GLIBC_$MAX ≤ 2.28" || { echo "❌ GLIBC_$MAX > 2.28"; exit 1; }
 
-VERSION="0.2.0"
+# 优先取 tag 名（Actions 里 GITHUB_REF_NAME=vX.Y.Z），本地构建回退 Cargo.toml 版本
+VERSION="${GITHUB_REF_NAME#v}"
+[ -n "$VERSION" ] || VERSION=$(/usr/bin/sed -n 's/^version = "\(.*\)"/\1/p' src-slint/Cargo.toml | head -1)
 OUT="dist/xdoc-stress_${VERSION}_linux-${ARCH}.tar.xz"
 tar -cJf "$OUT" -C "$(dirname "$BIN")" "$(basename "$BIN")"
 echo "✅ $OUT"
