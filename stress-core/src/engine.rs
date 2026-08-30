@@ -28,7 +28,7 @@ async fn run_task(
     let t_start = std::time::Instant::now();
 
     let mut row = ResultRow {
-        ts: chrono::Utc::now().timestamp_millis(),
+        ts: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_millis() as i64,
         file_name: file_name.clone(),
         steps: String::new(),
         chain: chain.to_string(),
@@ -190,7 +190,7 @@ pub async fn start_stress(
     file_contents: Vec<(String, String)>, // (name, abs_path)
 ) {
     let threads = std::cmp::min(cfg.concurrency as usize, file_contents.len() * cfg.repeats as usize).max(1);
-    let run_id = chrono::Utc::now().timestamp_millis();
+    let run_id = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_millis() as i64;
 
     {
         let mut st = status.lock().await;

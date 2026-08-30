@@ -3,7 +3,7 @@
 # 产物:
 #   Linux tar.xz (x86_64/aarch64, Debian 10 glibc 2.28 地板, Slint GUI)
 #   Windows zip  (x86_64, MSVC 原生编译, Slint GUI)
-#   macOS app    (arm64+x64 通用, Slint GUI)
+
 
 name: release
 
@@ -76,28 +76,8 @@ jobs:
           name: windows-exe
           path: dist/*.exe
 
-  # ── macOS (arm64 + x64 通用) ──
-  macos:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: src-slint
-          shared-key: release-macos
-      - run: cargo build --release --manifest-path src-slint/Cargo.toml
-      - run: |
-          VERSION=$(grep -m1 '^version' src-slint/Cargo.toml | sed 's/version = "\(.*\)"/\1/')
-          mkdir -p dist
-          cp target/release/xdoc-stress "dist/xdoc-stress_${VERSION}_macos-universal"
-          strip "dist/xdoc-stress_${VERSION}_macos-universal"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: macos-bin
-          path: dist/xdoc-stress_*
-
-  publish:
-    needs: [linux-x86_64, linux-aarch64, windows, macos]
+    publish:
+    needs: [linux-x86_64, linux-aarch64, windows]
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     permissions:

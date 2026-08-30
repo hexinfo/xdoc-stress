@@ -27,7 +27,7 @@ docker run --rm --platform "linux/$ARCH" \
     apt-get -o Acquire::Retries=8 install -y -qq --no-install-recommends \
         build-essential curl ca-certificates xz-utils pkg-config file lld \
         libx11-dev libxext-dev libxft-dev libxrandr-dev libxcursor-dev libxi-dev \
-        libfontconfig1-dev libfreetype6-dev
+        libfontconfig1-dev libfreetype6-dev upx-ucl
     export PATH="/cargo/bin:$PATH"
     if ! command -v cargo >/dev/null 2>&1; then
         curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable --no-modify-path
@@ -36,6 +36,10 @@ docker run --rm --platform "linux/$ARCH" \
     export RUSTFLAGS="-C link-arg=-fuse-ld=lld"
     cargo build --release --manifest-path src-slint/Cargo.toml
     strip target/release/xdoc-stress
+    # UPX 压缩（apt 安装）
+    if command -v upx >/dev/null 2>&1; then
+        upx --best --lzma target/release/xdoc-stress -o target/release/xdoc-stress.upx 2>/dev/null && mv target/release/xdoc-stress.upx target/release/xdoc-stress
+    fi
 '
 
 BIN="target/release/xdoc-stress"

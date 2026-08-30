@@ -1,3 +1,11 @@
 [workspace]
 members = ["stress-core", "src-cli", "src-slint", "src-tauri"]
 resolver = "2"
+
+# ── 优化体积 ──
+[profile.release]
+opt-level = "z"          # 最小体积优化
+lto = true               # 链接时优化（跨 crate 内联消死代码）
+codegen-units = 1        # 单编译单元（更好的优化，编译更慢）
+panic = "abort"          # abort 替代 unwind（去掉 unwind 表）
+strip = true             # 符号表/调试信息全去
