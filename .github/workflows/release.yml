@@ -76,7 +76,7 @@ jobs:
           name: windows-exe
           path: dist/*.exe
 
-    publish:
+  publish:
     needs: [linux-x86_64, linux-aarch64, windows]
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
