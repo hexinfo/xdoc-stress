@@ -36,6 +36,12 @@ docker run --rm --platform "linux/$ARCH" \
     export RUSTFLAGS="-C link-arg=-fuse-ld=lld"
     cargo build --release --manifest-path src-slint/Cargo.toml
     strip target/release/xdoc-stress
+    # glibc 断言必须在 UPX 之前：压缩后字符串表不可读，strings 找不到 GLIBC 符号
+    MAXVER=$(strings target/release/xdoc-stress | grep -oE "GLIBC_[0-9]+(\.[0-9]+)*" | sort -uV | tail -1 || true)
+    MAX=${MAXVER#GLIBC_}
+    [ -n "$MAX" ] || { echo "❌ 未检测到 GLIBC 版本符号"; exit 1; }
+    LE=$(printf "%s\n" "2.28" "$MAX" | sort -V | tail -1)
+    [ "$LE" = "2.28" ] && echo "✅ GLIBC_$MAX ≤ 2.28" || { echo "❌ GLIBC_$MAX > 2.28"; exit 1; }
     # UPX 压缩（apt 安装）
     if command -v upx >/dev/null 2>&1; then
         upx --best --lzma target/release/xdoc-stress -o target/release/xdoc-stress.upx 2>/dev/null && mv target/release/xdoc-stress.upx target/release/xdoc-stress
@@ -44,13 +50,6 @@ docker run --rm --platform "linux/$ARCH" \
 
 BIN="target/release/xdoc-stress"
 [ -f "$BIN" ] || { echo "❌ 产物不存在: $BIN"; exit 1; }
-
-echo "━━━ [slint-linux-$ARCH] glibc 断言 ━━━"
-MAXVER=$(strings "$BIN" | grep -oE "GLIBC_[0-9]+(\\.[0-9]+)*" | sort -uV | tail -1)
-MAX=${MAXVER#GLIBC_}
-[ -n "$MAX" ] || { echo "❌ 未检测到 GLIBC 版本符号"; exit 1; }
-LE=$(printf '%s\n' "2.28" "$MAX" | sort -V | tail -1)
-[ "$LE" = "2.28" ] && echo "✅ GLIBC_$MAX ≤ 2.28" || { echo "❌ GLIBC_$MAX > 2.28"; exit 1; }
 
 # 优先取 tag 名（Actions 里 GITHUB_REF_NAME=vX.Y.Z），本地构建回退 Cargo.toml 版本
 VERSION="${GITHUB_REF_NAME#v}"
