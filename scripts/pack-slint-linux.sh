@@ -44,7 +44,7 @@ docker run --rm --platform "linux/$ARCH" \
     [ "$LE" = "2.28" ] && echo "✅ GLIBC_$MAX ≤ 2.28" || { echo "❌ GLIBC_$MAX > 2.28"; exit 1; }
     # UPX 压缩（apt 安装）
     if command -v upx >/dev/null 2>&1; then
-        upx --best --lzma target/release/xdoc-stress -o target/release/xdoc-stress.upx 2>/dev/null && mv target/release/xdoc-stress.upx target/release/xdoc-stress
+        upx --best --lzma target/release/xdoc-stress 2>&1 | tail -1 || echo '(UPX 不可用，跳过压缩)'
     fi
 '
 
