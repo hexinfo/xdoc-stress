@@ -7,6 +7,10 @@ edition = "2021"
 stress-core = { path = "../stress-core" }
 tokio = { version = "1", features = ["full"] }
 serde_json = "1"
+# 原生文件对话框：macOS 原生面板；Linux 走 xdg-desktop-portal（不引入 GTK）
+rfd = { version = "0.15", default-features = false, features = ["xdg-portal", "tokio"] }
+# 剪贴板（复制结果）
+arboard = "3"
 # Slint:纯 Rust GUI，无 webkit/gtk，兼容 glibc 2.28
 slint = { version = "1", default-features = false, features = [
     "std",
