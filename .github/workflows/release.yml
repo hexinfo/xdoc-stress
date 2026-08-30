@@ -67,6 +67,6 @@ jobs:
           path: dist
       - run: |
           TAG="${GITHUB_REF#refs/tags/}"
-          gh release create "$TAG" dist/* --title "xdoc-stress $TAG" --generate-notes
+          gh release create "$TAG" dist/* -R "$GITHUB_REPOSITORY" --title "xdoc-stress $TAG" --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
