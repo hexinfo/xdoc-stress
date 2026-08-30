@@ -4,6 +4,9 @@
 
 slint::include_modules!();
 
+mod modules;
+use modules::formatters;
+
 use slint::Model;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -17,38 +20,7 @@ const COPY_HEADER: &str = "#\t文件\t页数\t上传\t就绪\t下载\t转换\t�
 
 // ── 格式化工具 ──
 
-fn vt(v: &serde_json::Value) -> String {
-    match v.as_u64() {
-        Some(ms) if ms >= 1000 => format!("{:.1}s", ms as f64 / 1000.0),
-        Some(ms) => format!("{ms}ms"),
-        None => "—".into(),
-    }
-}
 
-fn vp(v: &serde_json::Value) -> String {
-    v.as_u64().map(|n| n.to_string()).unwrap_or_else(|| "—".into())
-}
-
-fn fmt_size(n: u64) -> String {
-    if n >= 1048576 { format!("{:.1}MB", n as f64 / 1048576.0) }
-    else if n >= 1024 { format!("{:.1}KB", n as f64 / 1024.0) }
-    else { format!("{n}B") }
-}
-
-/// 去掉 engine 侧的 core-{runId}-{seq}- 前缀，还原源文件名
-fn strip_prefix(name: &str) -> String {
-    name.strip_prefix("core-")
-        .and_then(|rest| {
-            let mut parts = rest.splitn(3, '-');
-            match (parts.next(), parts.next(), parts.next()) {
-                (Some(a), Some(b), Some(c)) if !a.is_empty() && !b.is_empty() && !c.is_empty()
-                    && a.bytes().all(|b| b.is_ascii_digit())
-                    && b.bytes().all(|b| b.is_ascii_digit()) => Some(c.to_string()),
-                _ => None,
-            }
-        })
-        .unwrap_or_else(|| name.to_string())
-}
 
 /// ResultRow → UI 行
 fn to_ui_row(r: &ResultRow, seq: usize) -> (ResultRowUi, String) {
@@ -56,15 +28,15 @@ fn to_ui_row(r: &ResultRow, seq: usize) -> (ResultRowUi, String) {
     (
         ResultRowUi {
             no: seq.to_string().into(),
-            file_name: strip_prefix(&r.file_name).into(),
-            page_count: vp(&r.page_count).into(),
-            upload: vt(&r.upload_ms).into(),
-            ready: vt(&r.state_ready_ms).into(),
-            download: vt(&r.metric_download_ms).into(),
-            convert: vt(&r.metric_convert_ms).into(),
-            first: vt(&r.first_range_ms).into(),
-            full: vt(&r.full_ms).into(),
-            e2e: vt(&r.e2e_ms).into(),
+            file_name: formatters::strip_prefix(&r.file_name).into(),
+            page_count: formatters::vp(&r.page_count).into(),
+            upload: formatters::vt(&r.upload_ms).into(),
+            ready: formatters::vt(&r.state_ready_ms).into(),
+            download: formatters::vt(&r.metric_download_ms).into(),
+            convert: formatters::vt(&r.metric_convert_ms).into(),
+            first: formatters::vt(&r.first_range_ms).into(),
+            full: formatters::vt(&r.full_ms).into(),
+            e2e: formatters::vt(&r.e2e_ms).into(),
             state,
             failed: !r.warmup && !r.success,
         },
@@ -112,7 +84,7 @@ fn main() {
                     let path = p.to_string_lossy().to_string();
                     let name = p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| path.clone());
                     let size = std::fs::metadata(&p).map(|m| m.len()).unwrap_or(0);
-                    FileItem { name: name.into(), path: path.into(), size: fmt_size(size).into(), checked: true }
+                    FileItem { name: name.into(), path: path.into(), size: formatters::fmt_size(size).into(), checked: true }
                 })
                 .count_of_push(&model);
             if added > 0 { sync(); }
