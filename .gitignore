@@ -1,0 +1,8 @@
+node_modules/
+dist/
+target/
+.cargo-home/
+*.app
+*.dmg
+*.tar.xz
+dist-linux/
