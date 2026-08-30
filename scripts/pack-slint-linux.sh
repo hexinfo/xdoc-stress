@@ -44,7 +44,7 @@ echo "━━━ [slint-linux-$ARCH] glibc 断言 ━━━"
 MAX=$(strings "$BIN" | grep -o "GLIBC_[0-9.]*" | sort -V | tail -1 | cut -d. -f3)
 [ "$MAX" -le 28 ] && echo "✅ GLIBC_2.$MAX ≤ 2.28" || { echo "❌ GLIBC_2.$MAX > 2.28"; exit 1; }
 
-VERSION="0.1.0"
+VERSION="0.2.0"
 OUT="dist/xdoc-stress_${VERSION}_linux-${ARCH}.tar.xz"
 tar -cJf "$OUT" -C "$(dirname "$BIN")" "$(basename "$BIN")"
 echo "✅ $OUT"
