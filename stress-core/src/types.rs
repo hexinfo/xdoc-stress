@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 
-/// 压测配置（从前端传入）
+/// 压测配置
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StressConfig {
@@ -17,11 +17,10 @@ pub struct StressConfig {
     pub tile_batch: usize,
     pub poll_interval_ms: u64,
     pub poll_max_times: u32,
-    /// 文件绝对路径列表
     pub files: Vec<String>,
 }
 
-/// 单轮结果行（与前端表格对应）
+/// 单轮结果行
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ResultRow {
@@ -56,7 +55,7 @@ pub struct RunSummary {
     pub files_per_min: f64,
 }
 
-/// 运行状态快照（前端轮询）
+/// 运行状态快照
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RunStatus {
@@ -65,6 +64,20 @@ pub struct RunStatus {
     pub logs: Vec<String>,
     pub rows: Vec<ResultRow>,
     pub summary: Option<RunSummary>,
+}
+
+impl RunStatus {
+    pub fn reset(&mut self) {
+        self.running = true;
+        self.stop_requested = false;
+        self.logs.clear();
+        self.rows.clear();
+        self.summary = None;
+    }
+
+    pub fn log(&mut self, msg: &str) {
+        self.logs.push(msg.to_string());
+    }
 }
 
 /// 共享运行句柄
