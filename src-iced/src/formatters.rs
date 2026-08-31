@@ -1,14 +1,15 @@
-/// 时间值格式化：null → —，≥1s → x.xs，否则 xms
+/// 时间值格式化：null → -，≥1s → x.xs，否则 xms
+/// （占位符用 ASCII 连字符：等宽字体下 em dash 会触发字体回退，渲染尺寸与数字不一致）
 pub fn vt(v: &serde_json::Value) -> String {
     match v.as_u64() {
         Some(ms) if ms >= 1000 => format!("{:.1}s", ms as f64 / 1000.0),
         Some(ms) => format!("{ms}ms"),
-        None => "—".into(),
+        None => "-".into(),
     }
 }
 
 pub fn vp(v: &serde_json::Value) -> String {
-    v.as_u64().map(|n| n.to_string()).unwrap_or_else(|| "—".into())
+    v.as_u64().map(|n| n.to_string()).unwrap_or_else(|| "-".into())
 }
 
 pub fn fmt_size(n: u64) -> String {

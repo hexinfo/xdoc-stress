@@ -1,9 +1,0 @@
-{
-  "name": "xdoc-stress-desktop",
-  "private": true,
-  "scripts": {
-    "dev": "cargo tauri dev",
-    "build": "cargo tauri build",
-    "build:linux": "./scripts-build-linux.sh"
-  }
-}

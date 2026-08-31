@@ -1,8 +1,8 @@
 # Release:打 v* 标签 → 三平台打包 → 发布到 GitHub Releases
 #
 # 产物:
-#   Linux tar.xz (x86_64/aarch64, Debian 10 glibc 2.28 地板, Slint GUI)
-#   Windows zip  (x86_64, MSVC 原生编译, Slint GUI)
+#   Linux tar.xz (x86_64/aarch64, Debian 10 glibc 2.28 地板, iced GUI, tiny-skia 软件渲染)
+#   Windows exe  (x86_64, MSVC 原生编译, iced GUI)
 
 
 name: release
@@ -29,9 +29,9 @@ jobs:
           path: |
             .ci-cache
             target
-          key: slint-x86_64-cargo-${{ hashFiles('Cargo.lock') }}
-          restore-keys: slint-x86_64-cargo-
-      - run: bash scripts/pack-slint-linux.sh x86_64
+          key: iced-x86_64-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: iced-x86_64-cargo-
+      - run: bash scripts/pack-iced-linux.sh x86_64
       - uses: actions/upload-artifact@v4
         with:
           name: linux-x86_64-tarxz
@@ -47,9 +47,9 @@ jobs:
           path: |
             .ci-cache
             target
-          key: slint-aarch64-cargo-${{ hashFiles('Cargo.lock') }}
-          restore-keys: slint-aarch64-cargo-
-      - run: bash scripts/pack-slint-linux.sh aarch64
+          key: iced-aarch64-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: iced-aarch64-cargo-
+      - run: bash scripts/pack-iced-linux.sh aarch64
       - uses: actions/upload-artifact@v4
         with:
           name: linux-aarch64-tarxz
@@ -62,14 +62,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: src-slint
+          workspaces: src-iced
           shared-key: release-windows
-      - run: cargo build --release --manifest-path src-slint/Cargo.toml
+      - run: cargo build --release --manifest-path src-iced/Cargo.toml
         shell: bash
       - run: |
-          VERSION="${GITHUB_REF_NAME#v}"; [ -n "$VERSION" ] || VERSION=$(grep -m1 '^version' src-slint/Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          VERSION="${GITHUB_REF_NAME#v}"; [ -n "$VERSION" ] || VERSION=$(grep -m1 '^version' src-iced/Cargo.toml | sed 's/version = "\(.*\)"/\1/')
           mkdir -p dist
-          cp src-slint/../target/release/xdoc-stress.exe "dist/xdoc-stress_${VERSION}_windows-x64.exe"
+          cp target/release/xdoc-stress-iced.exe "dist/xdoc-stress_${VERSION}_windows-x64.exe"
         shell: bash
       - uses: actions/upload-artifact@v4
         with:

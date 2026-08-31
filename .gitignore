@@ -6,3 +6,8 @@ target/
 *.dmg
 *.tar.xz
 dist-linux/
+
+# 本地工具缓存
+.ci-cache/
+.video_agent/
+.zcode/

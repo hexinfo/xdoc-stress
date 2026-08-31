@@ -1,5 +1,5 @@
 [workspace]
-members = ["stress-core", "src-slint"]
+members = ["stress-core", "src-iced"]
 resolver = "2"
 
 # ── 优化体积 ──

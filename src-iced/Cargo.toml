@@ -1,6 +1,6 @@
 [package]
-name = "xdoc-stress-slint"
-version = "0.2.0"
+name = "xdoc-stress-iced"
+version = "0.3.5"
 edition = "2021"
 
 [dependencies]
@@ -12,17 +12,10 @@ serde_json = "1"
 rfd = { version = "0.15", default-features = false, features = ["xdg-portal", "tokio"] }
 # 剪贴板（复制结果）
 arboard = "3"
-# Slint:纯 Rust GUI，无 webkit/gtk，兼容 glibc 2.28
-slint = { version = "1", default-features = false, features = [
-    "std",
-    "backend-winit",
-    "renderer-software",
-    "compat-1-2"
+# iced:纯 Rust GUI；tiny-skia 软件渲染（无 GPU/wgpu，兼容信创）；仅 X11 不带 Wayland；tokio 执行器
+iced = { version = "0.14", default-features = false, features = [
+    "tiny-skia",
+    "tokio",
+    "x11",
+    "lazy"
 ] }
-
-[[bin]]
-name = "xdoc-stress"
-path = "src/main.rs"
-
-[build-dependencies]
-slint-build = "1"

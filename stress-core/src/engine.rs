@@ -122,9 +122,9 @@ async fn run_task(
         let (_, prep_ms) = measure(client.prepare(&fid, &biz_name)).await;
         row.prepare_ms = Value::from(prep_ms as i64);
         let t_ready = std::time::Instant::now();
-        let mut file_size = 0u64;
+        // loop-break 表达式直接产出就绪后的文件大小,避免"先初始化再覆盖"的写法
         let mut polls = 0u32;
-        loop {
+        let file_size: u64 = loop {
             if stop.load(Ordering::Relaxed) { return Err(STOPPED.into()); }
             if polls >= cfg.poll_max_times {
                 return Err(format!("state 未就绪（{} 次轮询）", polls));
@@ -134,16 +134,15 @@ async fn run_task(
             let size = data["size"].as_u64().unwrap_or(0);
             let pages = data["pageCount"].as_u64().unwrap_or(0);
             if size > 0 || pages > 0 {
-                file_size = size;
                 row.page_count = Value::from(pages as i64);
                 if let Some(m) = data["metric"].as_object() {
                     row.metric_download_ms = m.get("download").and_then(vi64).map(Value::from).unwrap_or(Value::Null);
                     row.metric_convert_ms = m.get("convert").and_then(vi64).map(Value::from).unwrap_or(Value::Null);
                 }
-                break;
+                break size;
             }
             tokio::time::sleep(std::time::Duration::from_millis(cfg.poll_interval_ms)).await;
-        }
+        };
         row.state_polls = Value::from(polls as i64);
         row.state_ready_ms = Value::from(t_ready.elapsed().as_millis() as i64);
         steps.push("convert");
@@ -241,5 +240,5 @@ pub async fn start_stress(
         total, success, concurrency: threads as u32, wall_ms,
         files_per_min: (fpm * 100.0).round() / 100.0,
     });
-    st.log(&format!("━━━ {}/{} | {:.1} 件/min ━━━", success, total, fpm));
+    st.log(&format!("--- {}/{} | {:.1} 件/min ---", success, total, fpm));
 }
