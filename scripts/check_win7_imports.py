@@ -13,6 +13,11 @@ bcryptprimitives.dll 的 ProcessPrng(Win10+),在 Win7 上加载器直接报
 import struct
 import sys
 
+# Windows runner 的 Python stdout 默认 cp1252,中文输出会 UnicodeEncodeError
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 # Win7 的系统 DLL 中不存在的入口点(Win8+/Win10+ 才有)
 FORBIDDEN_SYMBOLS = {
     "GetSystemTimePreciseAsFileTime",                    # Win8+  kernel32
