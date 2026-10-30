@@ -71,8 +71,9 @@ jobs:
           workspaces: src-iced
           shared-key: release-windows-win7
       # 钉死 nightly 版本保证可复现;-Zbuild-std 仅 nightly 可用
-      - uses: dtolnay/rust-toolchain@nightly-2026-09-08
+      - uses: dtolnay/rust-toolchain@nightly
         with:
+          toolchain: nightly-2026-09-08
           components: rust-src
       - run: rustup default nightly-2026-09-08
         shell: bash
