@@ -2,7 +2,7 @@
 #
 # 产物:
 #   Linux tar.xz (x86_64/aarch64, Debian 10 glibc 2.28 地板, iced GUI, tiny-skia 软件渲染)
-#   Windows exe  (x86_64, MSVC 原生编译, iced GUI)
+#   Windows exe  (x86_64, MSVC 原生编译, x86_64-win7-windows-msvc 目标, Win7 SP1 ~ Win11)
 
 
 name: release
@@ -55,7 +55,13 @@ jobs:
           name: linux-aarch64-tarxz
           path: dist/*.tar.xz
 
-  # ── Windows x86_64 (MSVC 原生编译) ──
+  # ── Windows x86_64 (MSVC 原生编译, Win7 兼容目标) ──
+  # Win7 兼容原理:x86_64-win7-windows-msvc(tier 3 目标,std 无预编译,需 -Zbuild-std
+  # 从源码编 std)下,std 自动把 GetSystemTimePreciseAsFileTime 降级为
+  # GetSystemTimeAsFileTime、WaitOnAddress 族改为运行时 GetProcAddress 延迟加载、
+  # 去掉 ProcessPrng 硬导入;getrandom 走 windows_legacy(RtlGenRandom)后端;
+  # +crt-static 静态链接 UCRT/VCRUNTIME,Win7 无补丁机器也无需 VC 运行库。
+  # 同一产物在 Win8/10/11 上照常运行(新 API 存在时延迟加载自动启用)。
   windows:
     runs-on: windows-latest
     steps:
@@ -63,13 +69,26 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-iced
-          shared-key: release-windows
-      - run: cargo build --release --manifest-path src-iced/Cargo.toml
+          shared-key: release-windows-win7
+      # 钉死 nightly 版本保证可复现;-Zbuild-std 仅 nightly 可用
+      - uses: dtolnay/rust-toolchain@nightly-2026-09-08
+        with:
+          components: rust-src
+      - run: rustup default nightly-2026-09-08
+        shell: bash
+      - run: |
+          RUSTFLAGS='-C target-feature=+crt-static --cfg getrandom_backend="windows_legacy"' \
+          cargo build --release --manifest-path src-iced/Cargo.toml \
+            --target x86_64-win7-windows-msvc \
+            -Zbuild-std=std,panic_abort
+        shell: bash
+      # Win7 兼容闸门:导入表禁止 Win8+/Win10+ 硬导入与动态 CRT 依赖(防回归)
+      - run: python scripts/check_win7_imports.py target/x86_64-win7-windows-msvc/release/xdoc-stress-iced.exe
         shell: bash
       - run: |
           VERSION="${GITHUB_REF_NAME#v}"; [ -n "$VERSION" ] || VERSION=$(grep -m1 '^version' src-iced/Cargo.toml | sed 's/version = "\(.*\)"/\1/')
           mkdir -p dist
-          cp target/release/xdoc-stress-iced.exe "dist/xdoc-stress_${VERSION}_windows-x64.exe"
+          cp target/x86_64-win7-windows-msvc/release/xdoc-stress-iced.exe "dist/xdoc-stress_${VERSION}_windows-x64.exe"
         shell: bash
       - uses: actions/upload-artifact@v4
         with:
